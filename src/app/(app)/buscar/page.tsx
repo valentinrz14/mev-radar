@@ -87,7 +87,7 @@ export default function BuscarPage() {
               {progress?.label ?? 'el departamento'}. Probá una variante de la escritura.
             </div>
           ) : (
-            <ul className="flex flex-col gap-3">
+            <ul className="flex list-none flex-col gap-3">
               {matches.map((m) => (
                 <li key={`${m.organismoName}-${m.nidCausa}-${m.pidJuzgado}`}>
                   <MatchCard match={m} />
@@ -124,13 +124,22 @@ function MatchCard({
       >
         {match.caratula}
       </a>
-      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+      <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs">
         <span className="text-[var(--ink-soft)]">{match.organismoName}</span>
+        <span aria-hidden="true" className="text-[var(--line)]">
+          ·
+        </span>
         <span className="rounded-full bg-[var(--seal-ink)] px-2 py-0.5 font-[family-name:var(--font-mono)] text-[var(--seal)]">
           Expte {match.nroExpediente}
         </span>
+        <span aria-hidden="true" className="text-[var(--line)]">
+          ·
+        </span>
         <span className="rounded-full bg-[var(--signal-soft)] px-2 py-0.5 text-[var(--ink)]">
           {match.estado}
+        </span>
+        <span aria-hidden="true" className="text-[var(--line)]">
+          ·
         </span>
         <span className="text-[var(--ink-soft)]">inicio {match.fechaInicio}</span>
       </div>
