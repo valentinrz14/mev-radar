@@ -38,9 +38,14 @@ export class MevSession {
   }
 
   async ensureOnBusqueda(): Promise<void> {
-    if (!this.page.url().toLowerCase().includes('busqueda.asp') || !(await this.page.$('select[name=JuzgadoElegido]'))) {
-      await this.login();
+    // La sesión de MEV se mantiene por cookie: normalmente alcanza con
+    // navegar de vuelta al formulario de búsqueda (barato). Solo si la
+    // sesión realmente expiró (el form no aparece) hacemos un login completo.
+    await this.page.goto(`${BASE}/busqueda.asp`, { waitUntil: 'domcontentloaded' });
+    if (await this.page.$('select[name=JuzgadoElegido]')) {
+      return;
     }
+    await this.login();
   }
 
   async close(): Promise<void> { await this.ctx.close(); }
