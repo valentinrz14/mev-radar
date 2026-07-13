@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { notifyDone } from './notify';
+import { notifyDone, requestNotifyPermission } from './notify';
 import { useSearchStream } from './useSearchStream';
 
 export default function BuscarPage() {
@@ -17,6 +17,7 @@ export default function BuscarPage() {
         className="flex gap-2 mb-6"
         onSubmit={(e) => {
           e.preventDefault();
+          requestNotifyPermission();
           start(departamento, termino, 'Am');
         }}
       >
