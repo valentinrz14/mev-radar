@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeAll } from 'vitest';
-import { encryptSecret, decryptSecret } from '@/lib/crypto';
+import { beforeAll, describe, expect, it } from 'vitest';
+import { decryptSecret, encryptSecret } from '@/lib/crypto';
 
 beforeAll(() => {
   process.env.MEV_CRED_KEY = '0'.repeat(64); // 32 bytes en hex

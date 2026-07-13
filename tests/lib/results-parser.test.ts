@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { describe, expect, it } from 'vitest';
 import { parseResults } from '@/lib/results-parser';
 
 const html = readFileSync('docs/superpowers/specs/recon-fixtures/results_lotti.html', 'utf8');
@@ -23,15 +23,15 @@ describe('parseResults', () => {
   });
   it('no duplica filas: una por causa, igual al total', () => {
     const { rows, total } = parseResults(html);
-    expect(rows.length).toBe(total);                 // 20, no 40
+    expect(rows.length).toBe(total); // 20, no 40
     const ids = rows.map((r) => r.nidCausa);
-    expect(new Set(ids).size).toBe(ids.length);       // nidCausa únicos
+    expect(new Set(ids).size).toBe(ids.length); // nidCausa únicos
   });
   it('no incluye carátulas basura (artefactos de comentarios HTML)', () => {
     const { rows } = parseResults(html);
     for (const r of rows) {
-      expect(r.caratula).not.toMatch(/^-+>?/);        // nada tipo "-->"
-      expect(r.caratula).toMatch(/[A-Za-zÁÉÍÓÚÑ]/);   // tiene letras reales
+      expect(r.caratula).not.toMatch(/^-+>?/); // nada tipo "-->"
+      expect(r.caratula).toMatch(/[A-Za-zÁÉÍÓÚÑ]/); // tiene letras reales
       expect(r.caratula.length).toBeGreaterThan(5);
     }
   });

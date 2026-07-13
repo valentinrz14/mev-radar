@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { normalize, matchesWholeWord, filterResults } from '@/lib/result-filter';
+import { describe, expect, it } from 'vitest';
+import { filterResults, matchesWholeWord, normalize } from '@/lib/result-filter';
 
 describe('normalize', () => {
   it('baja mayúsculas y saca acentos', () => {
@@ -29,10 +29,7 @@ describe('matchesWholeWord', () => {
 
 describe('filterResults', () => {
   it('separa matches de descartados', () => {
-    const rows = [
-      { caratula: 'LOTTI JUAN C/ X' },
-      { caratula: 'LANCELOTTI PEDRO C/ Y' },
-    ];
+    const rows = [{ caratula: 'LOTTI JUAN C/ X' }, { caratula: 'LANCELOTTI PEDRO C/ Y' }];
     const { matches, discarded } = filterResults(rows, 'Lotti');
     expect(matches).toHaveLength(1);
     expect(discarded).toHaveLength(1);

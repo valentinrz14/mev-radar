@@ -1,16 +1,24 @@
-import { describe, it, expect, afterAll } from 'vitest';
-import { MevSession } from '@/mev/session';
-import { runSearch } from '@/mev/search-runner';
+import { afterAll, describe, expect, it } from 'vitest';
 import { closeBrowser } from '@/mev/browser';
+import { runSearch } from '@/mev/search-runner';
+import { MevSession } from '@/mev/session';
 
 const RUN = process.env.MEV_LIVE === '1';
 const d = RUN ? describe : describe.skip;
-afterAll(async () => { await closeBrowser(); });
+afterAll(async () => {
+  await closeBrowser();
+});
 
 d('runSearch (live)', () => {
   it('busca LOTTI en Morón y filtra los falsos positivos', async () => {
     const s = await MevSession.open(
-      { usuario: process.env.MEV_TEST_USER!, clave: process.env.MEV_TEST_PASS!, deptoRegistrado: 'MO' }, '19');
+      {
+        usuario: process.env.MEV_TEST_USER!,
+        clave: process.env.MEV_TEST_PASS!,
+        deptoRegistrado: 'MO',
+      },
+      '19',
+    );
     const events: number[] = [];
     const results = await runSearch(s, 'LOTTI', 'Am', (i) => events.push(i));
     await s.close();
@@ -25,9 +33,11 @@ d('runSearch (live)', () => {
     // ningún match puede ser un substring tipo "...LOTTI" pegado a otra palabra
     for (const r of results) {
       for (const m of r.matches) {
-        expect(/(^|[^a-zñáéíóú])lotti([^a-zñáéíóú]|$)/i.test(
-          m.caratula.normalize('NFD').replace(/[̀-ͯ]/g, ''),
-        )).toBe(true);
+        expect(
+          /(^|[^a-zñáéíóú])lotti([^a-zñáéíóú]|$)/i.test(
+            m.caratula.normalize('NFD').replace(/[̀-ͯ]/g, ''),
+          ),
+        ).toBe(true);
       }
     }
   }, 240_000);

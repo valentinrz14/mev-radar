@@ -1,4 +1,5 @@
 import { normalize } from './normalize';
+
 export { normalize };
 
 function escapeRegex(s: string): string {

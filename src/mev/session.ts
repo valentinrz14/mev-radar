@@ -22,18 +22,24 @@ export class MevSession {
   }
 
   private async login(): Promise<void> {
-    const { page, creds, departamentoCode } = this;
+    const { page } = this;
     await page.goto(`${BASE}/loguin.asp`, { waitUntil: 'domcontentloaded' });
-    await page.fill('input[name=usuario]', creds.usuario);
-    await page.fill('input[name=clave]', creds.clave);
-    await page.selectOption('select[name=DeptoRegistrado]', creds.deptoRegistrado);
-    await Promise.all([page.waitForLoadState('domcontentloaded'), page.click('input[type=submit]')]);
+    await page.fill('input[name=usuario]', this.creds.usuario);
+    await page.fill('input[name=clave]', this.creds.clave);
+    await page.selectOption('select[name=DeptoRegistrado]', this.creds.deptoRegistrado);
+    await Promise.all([
+      page.waitForLoadState('domcontentloaded'),
+      page.click('input[type=submit]'),
+    ]);
     if (!(await page.$('select[name=DtoJudElegido]'))) {
       throw new Error('MEV_LOGIN_FAILED'); // credenciales inválidas
     }
     await page.check('input[name=TipoDto][value=CC]');
-    await page.selectOption('select[name=DtoJudElegido]', departamentoCode);
-    await Promise.all([page.waitForLoadState('domcontentloaded'), page.click('input[name=Aceptar]')]);
+    await page.selectOption('select[name=DtoJudElegido]', this.departamentoCode);
+    await Promise.all([
+      page.waitForLoadState('domcontentloaded'),
+      page.click('input[name=Aceptar]'),
+    ]);
     await page.waitForSelector('select[name=JuzgadoElegido]', { timeout: 15_000 });
   }
 
@@ -48,5 +54,7 @@ export class MevSession {
     await this.login();
   }
 
-  async close(): Promise<void> { await this.ctx.close(); }
+  async close(): Promise<void> {
+    await this.ctx.close();
+  }
 }
