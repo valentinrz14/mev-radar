@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  lawyer
+  admin
+}
+
+enum SubStatus {
+  active
+  expired
+  canceled
+}
+
+enum SearchStatus {
+  running
+  done
+  error
+}
+
+model User {
+  id     String @id @default(cuid())
+  nombre String
+  role   Role   @default(lawyer)
+
+  // Admin: entra con email + passwordHash.
+  email        String? @unique
+  passwordHash String?
+
+  // Abogado: entra con su usuario/contraseña de MEV (validados en vivo).
+  // La clave se guarda encriptada en el primer login exitoso y se usa para buscar.
+  mevUsuario         String? @unique
+  mevClaveEncrypted  String?
+  mevDeptoRegistrado String?
+
+  createdAt    DateTime      @default(now())
+  subscription Subscription?
+  searches     Search[]
+}
+
+model Subscription {
+  id        String    @id @default(cuid())
+  userId    String    @unique
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan      String    @default("mensual")
+  status    SubStatus @default(active)
+  startsAt  DateTime  @default(now())
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+}
+
+model Search {
+  id           String       @id @default(cuid())
+  userId       String
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  departamento String
+  termino      String
+  estado       String
+  status       SearchStatus @default(running)
+  totalMatches Int          @default(0)
+  createdAt    DateTime     @default(now())
+  finishedAt   DateTime?
+  results      SearchResult[]
+}
+
+model SearchResult {
+  id               String  @id @default(cuid())
+  searchId         String
+  search           Search  @relation(fields: [searchId], references: [id], onDelete: Cascade)
+  organismoCode    String
+  organismoName    String
+  caratula         String
+  estado           String
+  receptoria       String
+  nroExpediente    String
+  fechaInicio      String
+  ultimoMovimiento String
+  nidCausa         String
+  pidJuzgado       String
+}
