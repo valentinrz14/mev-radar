@@ -4,7 +4,16 @@ import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
 
 export async function POST(req: Request) {
-  const { email, password } = await req.json();
+  let body: { email?: string; password?: string };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'Cuerpo de la solicitud inválido' }, { status: 400 });
+  }
+  const { email, password } = body;
+  if (!email || !password) {
+    return NextResponse.json({ error: 'Faltan credenciales' }, { status: 400 });
+  }
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user || !(await verifyPassword(password, user.passwordHash))) {
     return NextResponse.json({ error: 'Credenciales inválidas' }, { status: 401 });

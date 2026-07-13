@@ -24,8 +24,9 @@ type OrganismEventData = {
   discardedCount?: number;
   error?: string;
 };
+type DoneEventData = { totalMatches: number };
 
-export function useSearchStream(onDone: () => void) {
+export function useSearchStream(onDone: (total: number) => void) {
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState<Progress | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
@@ -57,10 +58,11 @@ export function useSearchStream(onDone: () => void) {
           ]);
         }
       });
-      es.addEventListener('done', () => {
+      es.addEventListener('done', (e) => {
+        const d = JSON.parse((e as MessageEvent).data) as DoneEventData;
         setRunning(false);
         es.close();
-        onDone();
+        onDone(d.totalMatches);
       });
       es.addEventListener('error', () => {
         setRunning(false);

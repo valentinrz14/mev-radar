@@ -5,7 +5,7 @@ export type SessionData = { userId?: string; role?: 'lawyer' | 'admin' };
 const options = {
   password: process.env.SESSION_SECRET!,
   cookieName: 'mevradar_session',
-  cookieOptions: { secure: process.env.NODE_ENV === 'production' },
+  cookieOptions: { secure: process.env.NODE_ENV === 'production', sameSite: 'lax' as const },
 };
 export async function getSession(): Promise<IronSession<SessionData>> {
   return getIronSession<SessionData>(await cookies(), options);

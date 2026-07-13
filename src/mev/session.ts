@@ -17,7 +17,12 @@ export class MevSession {
     const ctx = await browser.newContext();
     const page = await ctx.newPage();
     const s = new MevSession(ctx, page, creds, departamentoCode);
-    await s.login();
+    try {
+      await s.login();
+    } catch (e) {
+      await ctx.close().catch(() => {});
+      throw e;
+    }
     return s;
   }
 

@@ -37,18 +37,30 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const departamento = url.searchParams.get('departamento') ?? '19';
   const termino = (url.searchParams.get('termino') ?? '').trim();
-  const estado = (url.searchParams.get('estado') ?? 'Am') as 'Ac' | 'Ar' | 'Am';
+  const estadoParam = url.searchParams.get('estado') ?? 'Am';
   const depto = getDepartamento(departamento);
   const cred = await prisma.mevCredential.findUnique({ where: { userId } });
   if (!termino || !depto || !cred) return new Response('Faltan datos', { status: 400 });
+  if (estadoParam !== 'Ac' && estadoParam !== 'Ar' && estadoParam !== 'Am') {
+    return new Response('Estado inválido', { status: 400 });
+  }
+  const estado = estadoParam;
 
   const encoder = new TextEncoder();
+  const ac = new AbortController();
+  let closed = false;
   const stream = new ReadableStream({
     async start(controller) {
-      const send = (payload: SsePayload) =>
-        controller.enqueue(
-          encoder.encode(`event: ${payload.event}\ndata: ${JSON.stringify(payload.data)}\n\n`),
-        );
+      const send = (payload: SsePayload) => {
+        if (closed) return;
+        try {
+          controller.enqueue(
+            encoder.encode(`event: ${payload.event}\ndata: ${JSON.stringify(payload.data)}\n\n`),
+          );
+        } catch {
+          // el controller ya está cerrado (cliente desconectado en el medio de un enqueue)
+        }
+      };
       const search = await prisma.search.create({
         data: { userId, departamento, termino, estado, status: 'running' },
       });
@@ -65,24 +77,30 @@ export async function GET(req: Request) {
           try {
             let started = false;
             let totalMatches = 0;
-            const results = await runSearch(session, termino, estado, (index, total, r) => {
-              if (!started) {
-                send({ event: 'start', data: { total, departamento: depto.name } });
-                started = true;
-              }
-              totalMatches += r.matches.length;
-              send({
-                event: 'organism',
-                data: {
-                  index,
-                  total,
-                  name: r.name,
-                  matches: r.matches,
-                  discardedCount: r.discardedCount,
-                  error: r.error,
-                },
-              });
-            });
+            const results = await runSearch(
+              session,
+              termino,
+              estado,
+              (index, total, r) => {
+                if (!started) {
+                  send({ event: 'start', data: { total, departamento: depto.name } });
+                  started = true;
+                }
+                totalMatches += r.matches.length;
+                send({
+                  event: 'organism',
+                  data: {
+                    index,
+                    total,
+                    name: r.name,
+                    matches: r.matches,
+                    discardedCount: r.discardedCount,
+                    error: r.error,
+                  },
+                });
+              },
+              ac.signal,
+            );
             // persistir resultados
             const flat = results.flatMap((r) =>
               r.matches.map((m) => ({
@@ -110,11 +128,26 @@ export async function GET(req: Request) {
           }
         });
       } catch (e) {
-        await prisma.search.update({ where: { id: search.id }, data: { status: 'error' } });
+        await prisma.search
+          .update({ where: { id: search.id }, data: { status: 'error' } })
+          .catch(() => {});
         send({ event: 'error', data: { message: e instanceof Error ? e.message : 'error' } });
       } finally {
-        controller.close();
+        if (!closed) {
+          closed = true;
+          try {
+            controller.close();
+          } catch {
+            // ya cerrado (ej: el cliente se desconectó y disparó cancel())
+          }
+        }
       }
+    },
+    cancel() {
+      // el cliente se desconectó: cortar el scrape en curso y no volver a
+      // enqueuear en un controller que ReadableStream ya considera cerrado.
+      closed = true;
+      ac.abort();
     },
   });
   return new Response(stream, {

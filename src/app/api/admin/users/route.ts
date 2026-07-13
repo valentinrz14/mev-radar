@@ -45,22 +45,34 @@ export async function POST(req: Request) {
     });
   } else if (body.action === 'renew') {
     const sub = await prisma.subscription.findUnique({ where: { userId: body.userId } });
-    const base = sub && sub.expiresAt > new Date() ? sub.expiresAt : new Date();
-    await prisma.subscription.update({
+    const now = new Date();
+    const base = sub && sub.expiresAt > now ? sub.expiresAt : now;
+    const expiresAt = new Date(base.getTime() + 30 * 86_400_000);
+    await prisma.subscription.upsert({
       where: { userId: body.userId },
-      data: { status: 'active', expiresAt: new Date(base.getTime() + 30 * 86_400_000) },
+      create: { userId: body.userId, status: 'active', startsAt: now, expiresAt },
+      update: { status: 'active', expiresAt },
     });
   } else if (body.action === 'toggle') {
     const sub = await prisma.subscription.findUnique({ where: { userId: body.userId } });
-    await prisma.subscription.update({
+    const now = new Date();
+    await prisma.subscription.upsert({
       where: { userId: body.userId },
-      data: { status: sub?.status === 'active' ? 'canceled' : 'active' },
+      create: {
+        userId: body.userId,
+        status: 'active',
+        startsAt: now,
+        expiresAt: new Date(now.getTime() + 30 * 86_400_000),
+      },
+      update: { status: sub?.status === 'active' ? 'canceled' : 'active' },
     });
   } else if (body.action === 'reset') {
     await prisma.user.update({
       where: { id: body.userId },
       data: { passwordHash: await hashPassword(body.password) },
     });
+  } else {
+    return NextResponse.json({ error: 'Acción desconocida' }, { status: 400 });
   }
   return NextResponse.json({ ok: true });
 }

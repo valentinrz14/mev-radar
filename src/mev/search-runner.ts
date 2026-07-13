@@ -108,11 +108,13 @@ export async function runSearch(
   termino: string,
   estado: 'Ac' | 'Ar' | 'Am',
   onOrganism: (index: number, total: number, r: OrganismResult) => void,
+  signal?: AbortSignal,
 ): Promise<OrganismResult[]> {
   await session.ensureOnBusqueda();
   const organisms = await readOrganisms(session.page);
   const out: OrganismResult[] = [];
   for (let i = 0; i < organisms.length; i++) {
+    if (signal?.aborted) break;
     const org = organisms[i];
     let result: OrganismResult;
     try {

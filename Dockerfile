@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/playwright:v1.49.0-jammy
+FROM mcr.microsoft.com/playwright:v1.61.1-jammy
 WORKDIR /app
 # instalar bun en la imagen (la base trae Node, no bun)
 RUN curl -fsSL https://bun.sh/install | bash

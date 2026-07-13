@@ -6,8 +6,8 @@ import { useSearchStream } from './useSearchStream';
 export default function BuscarPage() {
   const [termino, setTermino] = useState('');
   const [departamento, setDepartamento] = useState('19');
-  const { running, progress, matches, discarded, start } = useSearchStream(() =>
-    notifyDone(matches.length),
+  const { running, progress, matches, discarded, start } = useSearchStream((total) =>
+    notifyDone(total),
   );
 
   const searched = progress !== null;
