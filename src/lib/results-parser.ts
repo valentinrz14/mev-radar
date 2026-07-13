@@ -6,12 +6,24 @@ export type RawResult = {
 const strip = (s: string) => s.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ')
   .replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
 
+// Check if caratula is valid (not junk from HTML comments)
+function isValidCaratula(caratula: string): boolean {
+  // Must contain at least one letter (including accented chars)
+  if (!/[A-Za-zÁÉÍÓÚÑáéíóúñ]/.test(caratula)) return false;
+  // Must not start with dashes/arrows (comment artifacts like "-->")
+  if (/^-+>?/.test(caratula)) return false;
+  // Must be at least 6 chars long (real caratulas are longer)
+  if (caratula.length < 6) return false;
+  return true;
+}
+
 export function parseResults(html: string): { rows: RawResult[]; total: number | null; excedeLimite: boolean } {
   const excedeLimite = /exceden el l[ií]mite permitido/i.test(html);
   const totalMatch = html.match(/Total Expedientes\s*:\s*(\d+)/i);
   const total = totalMatch ? parseInt(totalMatch[1], 10) : null;
 
   const rows: RawResult[] = [];
+  const seenNidCausa = new Set<string>();
   // Cada resultado empieza en un <a href="procesales.asp?nidCausa=..&pidJuzgado=..">CARATULA</a>
   const anchorRe = /<a\s+href="procesales\.asp\?nidCausa=(\d+)&(?:amp;)?pidJuzgado=([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi;
   const anchors = [...html.matchAll(anchorRe)];
@@ -20,7 +32,11 @@ export function parseResults(html: string): { rows: RawResult[]; total: number |
     const nidCausa = m[1];
     const pidJuzgado = m[2].trim();
     const caratula = strip(m[3]);
-    if (!caratula) continue;
+
+    // Skip if empty or not a valid caratula, or if we've already seen this nidCausa
+    if (!caratula || !isValidCaratula(caratula) || seenNidCausa.has(nidCausa)) continue;
+    seenNidCausa.add(nidCausa);
+
     // el segmento entre este anchor y el próximo contiene estado/receptoría/expte/fechas
     const start = m.index! + m[0].length;
     const end = i + 1 < anchors.length ? anchors[i + 1].index! : html.length;
