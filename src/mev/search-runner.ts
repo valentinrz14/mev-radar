@@ -16,7 +16,18 @@ export async function searchOrganism(
   if (!page.url().toLowerCase().includes('busqueda.asp')) {
     await page.goto(`${BASE}/busqueda.asp`, { waitUntil: 'domcontentloaded' });
   }
-  await page.selectOption('select[name=JuzgadoElegido]', code);
+  // El value real de la opción puede traer espacios (ej. "GAM415  "), pero los
+  // códigos que maneja el runner vienen trimeados por readOrganisms. Resolvemos
+  // el value exacto contra el DOM para que selectOption matchee.
+  const realValue = await page.$$eval(
+    'select[name=JuzgadoElegido] option',
+    (opts, c) => (opts as HTMLOptionElement[]).find((o) => o.value.trim() === c)?.value,
+    code,
+  );
+  if (realValue === undefined) {
+    throw new Error(`Organismo no encontrado en el select: ${code}`);
+  }
+  await page.selectOption('select[name=JuzgadoElegido]', realValue);
   await page.check('input[name=radio][value=xCa]');
   await page.fill('input[name=caratula]', termino);
   await page.check(`input[name=TipoCausa][value=${estado}]`);
