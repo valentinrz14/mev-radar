@@ -40,7 +40,7 @@ const MAX_PAGES = 60;
  * nidCausa. `total` y `excedeLimite` se toman de la primera página: si
  * excede el límite no hay filas/paginación que recorrer.
  */
-async function collectOrganismRows(
+export async function collectOrganismRows(
   page: Page, code: string, termino: string, estado: string,
 ): Promise<{ rows: RawResult[]; total: number | null; excedeLimite: boolean }> {
   const { html: firstHtml } = await searchOrganism(page, code, termino, estado);
