@@ -1,3 +1,80 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --ink: #15213b;
+  --ink-soft: #46506a;
+  --paper: #f5f3ee;
+  --surface: #ffffff;
+  --seal: #7a1e2b;
+  --seal-ink: #fbedee;
+  --signal: #1fa8a0;
+  --signal-soft: #e4f4f2;
+  --line: #d9dce3;
+  --amber: #b27400;
+  --danger: #a32020;
+  --ok: #1f7a4d;
+
+  --font-display: "Spectral", serif;
+  --font-body: "Inter", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+}
+
+* {
+  border-color: var(--line);
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display), serif;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.font-mono,
+code,
+kbd {
+  font-family: var(--font-mono), monospace;
+}
+
+:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+}
+
+@keyframes radar-sweep-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.radar-sweep {
+  animation: radar-sweep-spin 2.4s linear infinite;
+  transform-origin: 50% 50%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

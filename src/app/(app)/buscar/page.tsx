@@ -10,11 +10,18 @@ export default function BuscarPage() {
     notifyDone(matches.length),
   );
 
+  const searched = progress !== null;
+  const percent = progress && progress.total > 0 ? (progress.current / progress.total) * 100 : 0;
+
   return (
-    <main className="max-w-3xl mx-auto mt-10 p-6">
-      <h1 className="text-2xl font-bold mb-6">Buscar causa</h1>
+    <div>
+      <p className="text-[0.72rem] font-semibold uppercase tracking-wide text-[var(--ink-soft)]">
+        Barrido de organismos
+      </p>
+      <h1 className="mt-1 text-[2rem] font-semibold text-[var(--ink)]">Buscar causa</h1>
+
       <form
-        className="flex gap-2 mb-6"
+        className="mt-6 flex flex-col gap-3 sm:flex-row"
         onSubmit={(e) => {
           e.preventDefault();
           requestNotifyPermission();
@@ -22,66 +29,158 @@ export default function BuscarPage() {
         }}
       >
         <select
-          className="border p-2 rounded"
+          className="rounded-[10px] border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--ink)]"
           value={departamento}
           onChange={(e) => setDepartamento(e.target.value)}
         >
           <option value="19">Morón</option>
         </select>
         <input
-          className="border p-2 rounded flex-1"
+          className="flex-1 rounded-[10px] border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--ink)] placeholder:text-[var(--ink-soft)]"
           placeholder="Apellido (carátula)"
           value={termino}
           onChange={(e) => setTermino(e.target.value)}
         />
         <button
           type="submit"
-          className="bg-blue-600 text-white px-4 rounded disabled:opacity-50"
+          className="rounded-[10px] bg-[var(--seal)] px-5 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
           disabled={running || !termino}
         >
           Buscar
         </button>
       </form>
 
-      {running && progress && (
-        <div className="mb-6">
-          <div className="flex items-center gap-3 text-sm text-gray-600">
-            <span className="inline-block w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-            Organismo {progress.current} de {progress.total} — {progress.label}
-          </div>
-          <div className="w-full bg-gray-200 rounded h-2 mt-2 overflow-hidden">
-            <div
-              className="bg-blue-600 h-2 transition-all"
-              style={{ width: `${(progress.current / progress.total) * 100}%` }}
-            />
+      {running && (
+        <div className="mt-10 flex flex-col items-center">
+          <RadarLoader
+            count={matches.length}
+            current={progress?.current ?? 0}
+            total={progress?.total ?? 0}
+          />
+          <div className="mt-5 w-full max-w-xs text-center">
+            <p className="text-sm text-[var(--ink-soft)]">
+              {progress
+                ? `Organismo ${progress.current} de ${progress.total} — ${progress.label}`
+                : 'Iniciando barrido…'}
+            </p>
+            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[var(--signal-soft)]">
+              <div
+                className="h-full rounded-full bg-[var(--signal)] transition-all duration-300"
+                style={{ width: `${percent}%` }}
+              />
+            </div>
           </div>
         </div>
       )}
 
-      <p className="text-sm text-gray-500 mb-2">
-        {matches.length} coincidencia(s)
-        {discarded > 0 && ` · ${discarded} descartada(s) por no ser palabra exacta`}
-      </p>
-      <ul className="space-y-2">
-        {matches.map((m) => (
-          <li
-            key={`${m.organismoName}-${m.nidCausa}-${m.pidJuzgado}`}
-            className="border rounded p-3"
-          >
-            <a
-              className="font-medium text-blue-700 hover:underline"
-              target="_blank"
-              rel="noreferrer"
-              href={`https://mev.scba.gov.ar/procesales.asp?nidCausa=${m.nidCausa}&pidJuzgado=${m.pidJuzgado}`}
-            >
-              {m.caratula}
-            </a>
-            <div className="text-xs text-gray-500 mt-1">
-              {m.organismoName} · Expte {m.nroExpediente} · {m.estado} · inicio {m.fechaInicio}
+      {searched && (
+        <div className="mt-10">
+          <p className="mb-4 text-sm text-[var(--ink-soft)]">
+            {matches.length} coincidencia{matches.length === 1 ? '' : 's'}
+            {discarded > 0 &&
+              ` · ${discarded} descartada${discarded === 1 ? '' : 's'} por no ser palabra exacta`}
+          </p>
+
+          {!running && matches.length === 0 ? (
+            <div className="rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-6 text-sm text-[var(--ink-soft)]">
+              No aparecieron causas con ese apellido exacto en{' '}
+              {progress?.label ?? 'el departamento'}. Probá una variante de la escritura.
             </div>
-          </li>
-        ))}
-      </ul>
-    </main>
+          ) : (
+            <ul className="flex flex-col gap-3">
+              {matches.map((m) => (
+                <li key={`${m.organismoName}-${m.nidCausa}-${m.pidJuzgado}`}>
+                  <MatchCard match={m} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MatchCard({
+  match,
+}: {
+  match: {
+    caratula: string;
+    organismoName: string;
+    nroExpediente: string;
+    estado: string;
+    fechaInicio: string;
+    nidCausa: string;
+    pidJuzgado: string;
+  };
+}) {
+  return (
+    <div className="rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-4 shadow-[0_1px_2px_rgba(21,33,59,.06),0_1px_8px_rgba(21,33,59,.04)] transition-shadow hover:border-[var(--signal)] hover:shadow-[0_2px_6px_rgba(21,33,59,.1),0_2px_12px_rgba(21,33,59,.06)]">
+      <a
+        className="font-[family-name:var(--font-display)] text-base font-semibold text-[var(--seal)] hover:underline"
+        target="_blank"
+        rel="noreferrer"
+        href={`https://mev.scba.gov.ar/procesales.asp?nidCausa=${match.nidCausa}&pidJuzgado=${match.pidJuzgado}`}
+      >
+        {match.caratula}
+      </a>
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+        <span className="text-[var(--ink-soft)]">{match.organismoName}</span>
+        <span className="rounded-full bg-[var(--seal-ink)] px-2 py-0.5 font-[family-name:var(--font-mono)] text-[var(--seal)]">
+          Expte {match.nroExpediente}
+        </span>
+        <span className="rounded-full bg-[var(--signal-soft)] px-2 py-0.5 text-[var(--ink)]">
+          {match.estado}
+        </span>
+        <span className="text-[var(--ink-soft)]">inicio {match.fechaInicio}</span>
+      </div>
+    </div>
+  );
+}
+
+function RadarLoader({ count, current, total }: { count: number; current: number; total: number }) {
+  return (
+    <div className="relative h-[220px] w-[220px]">
+      <svg viewBox="0 0 220 220" className="absolute inset-0 h-full w-full" aria-hidden="true">
+        <circle cx="110" cy="110" r="105" fill="var(--surface)" />
+        <circle cx="110" cy="110" r="100" fill="none" stroke="var(--line)" strokeWidth="1" />
+        <circle cx="110" cy="110" r="75" fill="none" stroke="var(--line)" strokeWidth="1" />
+        <circle cx="110" cy="110" r="50" fill="none" stroke="var(--line)" strokeWidth="1" />
+        <circle cx="110" cy="110" r="25" fill="none" stroke="var(--line)" strokeWidth="1" />
+        <line
+          x1="110"
+          y1="10"
+          x2="110"
+          y2="210"
+          stroke="var(--line)"
+          strokeWidth="1"
+          opacity="0.5"
+        />
+        <line
+          x1="10"
+          y1="110"
+          x2="210"
+          y2="110"
+          stroke="var(--line)"
+          strokeWidth="1"
+          opacity="0.5"
+        />
+      </svg>
+      <div
+        className="radar-sweep absolute inset-0 rounded-full"
+        style={{
+          background:
+            'conic-gradient(from 0deg, rgba(31,168,160,0.4), rgba(31,168,160,0) 32%, rgba(31,168,160,0) 100%)',
+        }}
+      />
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="font-[family-name:var(--font-display)] text-4xl font-semibold text-[var(--ink)]">
+          {count}
+        </span>
+        <span className="mt-1 font-[family-name:var(--font-mono)] text-xs text-[var(--ink-soft)]">
+          organismo {current} / {total || '—'}
+        </span>
+      </div>
+    </div>
   );
 }

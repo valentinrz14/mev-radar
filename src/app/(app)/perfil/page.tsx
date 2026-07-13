@@ -27,33 +27,67 @@ export default function PerfilPage() {
     setSaved(res.ok);
   }
   return (
-    <main className="max-w-md mx-auto mt-12 p-6">
-      <h1 className="text-xl font-bold mb-4">Mis credenciales MEV</h1>
-      <form onSubmit={save} className="space-y-3">
-        <input
-          className="border w-full p-2 rounded"
-          placeholder="Usuario MEV"
-          value={mevUsuario}
-          onChange={(e) => setUsuario(e.target.value)}
-        />
-        <input
-          className="border w-full p-2 rounded"
-          type="password"
-          placeholder="Contraseña MEV"
-          value={mevClave}
-          onChange={(e) => setClave(e.target.value)}
-        />
-        <input
-          className="border w-full p-2 rounded"
-          placeholder="Creado en (ej. MO)"
-          value={mevDeptoRegistrado}
-          onChange={(e) => setDepto(e.target.value)}
-        />
-        <button type="submit" className="bg-blue-600 text-white w-full p-2 rounded">
+    <div className="mx-auto max-w-md">
+      <p className="text-[0.72rem] font-semibold uppercase tracking-wide text-[var(--ink-soft)]">
+        Cuenta
+      </p>
+      <h1 className="mt-1 text-[2rem] font-semibold text-[var(--ink)]">Mis credenciales MEV</h1>
+
+      <form
+        onSubmit={save}
+        className="mt-6 space-y-4 rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-6 shadow-[0_1px_2px_rgba(21,33,59,.06),0_1px_8px_rgba(21,33,59,.04)]"
+      >
+        <div>
+          <label
+            htmlFor="mevUsuario"
+            className="mb-1 block text-[0.72rem] font-semibold uppercase tracking-wide text-[var(--ink-soft)]"
+          >
+            Usuario MEV
+          </label>
+          <input
+            id="mevUsuario"
+            className="w-full rounded-[10px] border border-[var(--line)] px-3 py-2 text-sm text-[var(--ink)]"
+            value={mevUsuario}
+            onChange={(e) => setUsuario(e.target.value)}
+          />
+        </div>
+        <div>
+          <label
+            htmlFor="mevClave"
+            className="mb-1 block text-[0.72rem] font-semibold uppercase tracking-wide text-[var(--ink-soft)]"
+          >
+            Contraseña MEV
+          </label>
+          <input
+            id="mevClave"
+            className="w-full rounded-[10px] border border-[var(--line)] px-3 py-2 text-sm text-[var(--ink)]"
+            type="password"
+            value={mevClave}
+            onChange={(e) => setClave(e.target.value)}
+          />
+        </div>
+        <div>
+          <label
+            htmlFor="mevDeptoRegistrado"
+            className="mb-1 block text-[0.72rem] font-semibold uppercase tracking-wide text-[var(--ink-soft)]"
+          >
+            Creado en (ej. MO)
+          </label>
+          <input
+            id="mevDeptoRegistrado"
+            className="w-full rounded-[10px] border border-[var(--line)] px-3 py-2 text-sm text-[var(--ink)]"
+            value={mevDeptoRegistrado}
+            onChange={(e) => setDepto(e.target.value)}
+          />
+        </div>
+        <button
+          type="submit"
+          className="w-full rounded-[10px] bg-[var(--seal)] py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
+        >
           Guardar
         </button>
-        {saved && <p className="text-green-600 text-sm">Guardado.</p>}
+        {saved && <p className="text-sm text-[var(--ok)]">Guardado.</p>}
       </form>
-    </main>
+    </div>
   );
 }
