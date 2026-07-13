@@ -2,6 +2,7 @@
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { RadarMark } from '../(app)/RadarMark';
+import { ThemeToggle } from '../ThemeToggle';
 
 type Row = {
   id: string;
@@ -84,13 +85,16 @@ export default function AdminPage() {
               MEV Radar
             </span>
           </div>
-          <button
-            type="button"
-            onClick={logout}
-            className="text-sm text-[var(--ink-soft)] transition-colors hover:text-[var(--ink)]"
-          >
-            Cerrar sesión
-          </button>
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            <button
+              type="button"
+              onClick={logout}
+              className="text-sm text-[var(--ink-soft)] transition-colors hover:text-[var(--ink)]"
+            >
+              Cerrar sesión
+            </button>
+          </div>
         </div>
       </header>
 

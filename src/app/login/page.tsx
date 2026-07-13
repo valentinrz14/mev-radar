@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { DEPTOS_REGISTRADOS } from '@/lib/departamentos';
 import { RadarMark } from '../(app)/RadarMark';
+import { ThemeToggle } from '../ThemeToggle';
 
 export default function LoginPage() {
   const [usuario, setUsuario] = useState('');
@@ -36,7 +37,10 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--ink)] px-6">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#0d1424] px-6">
+      <div className="absolute right-4 top-4 z-10 text-white/70">
+        <ThemeToggle />
+      </div>
       <svg
         className="pointer-events-none absolute left-1/2 top-1/2 h-[900px] w-[900px] -translate-x-1/2 -translate-y-1/2 opacity-[0.07]"
         viewBox="0 0 900 900"

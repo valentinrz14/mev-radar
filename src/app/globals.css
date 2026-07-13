@@ -17,6 +17,26 @@
   --font-display: "Spectral", serif;
   --font-body: "Inter", sans-serif;
   --font-mono: "IBM Plex Mono", monospace;
+
+  color-scheme: light;
+}
+
+/* Tema oscuro: mantiene la identidad "radar" (navy) pero invertida. */
+:root[data-theme="dark"] {
+  --ink: #e8ebf3;
+  --ink-soft: #98a3bd;
+  --paper: #0d1424;
+  --surface: #161f38;
+  --seal: #c65160;
+  --seal-ink: #3a2329;
+  --signal: #3bc9c0;
+  --signal-soft: #123130;
+  --line: #2a3552;
+  --amber: #e0a94a;
+  --danger: #ec7a7a;
+  --ok: #4cbd85;
+
+  color-scheme: dark;
 }
 
 * {

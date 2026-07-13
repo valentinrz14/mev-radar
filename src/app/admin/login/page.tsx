@@ -2,6 +2,7 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { RadarMark } from '../../(app)/RadarMark';
+import { ThemeToggle } from '../../ThemeToggle';
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
@@ -33,7 +34,10 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--ink)] px-6">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#0d1424] px-6">
+      <div className="absolute right-4 top-4 z-10 text-white/70">
+        <ThemeToggle />
+      </div>
       <div className="relative w-full max-w-sm rounded-xl bg-[var(--surface)] p-8 shadow-[0_1px_2px_rgba(21,33,59,.06),0_1px_8px_rgba(21,33,59,.04)]">
         <div className="flex flex-col items-center text-center">
           <RadarMark size={44} />

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { getSession } from '@/lib/session';
+import { ThemeToggle } from '../ThemeToggle';
 import { LogoutButton } from './LogoutButton';
 import { RadarMark } from './RadarMark';
 
@@ -30,6 +31,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               </Link>
             )}
             <LogoutButton />
+            <ThemeToggle />
           </nav>
         </div>
       </header>

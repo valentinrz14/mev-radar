@@ -22,9 +22,20 @@ const plexMono = IBM_Plex_Mono({
 
 export const metadata = { title: 'MEV Radar' };
 
+// Setea el tema antes del primer paint para evitar el flash.
+const themeScript = `(function(){try{var t=localStorage.getItem('theme');if(!t){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" className={`${spectral.variable} ${inter.variable} ${plexMono.variable}`}>
+    <html
+      lang="es"
+      suppressHydrationWarning
+      className={`${spectral.variable} ${inter.variable} ${plexMono.variable}`}
+    >
+      <head>
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: script anti-flash de tema */}
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body>{children}</body>
     </html>
   );
