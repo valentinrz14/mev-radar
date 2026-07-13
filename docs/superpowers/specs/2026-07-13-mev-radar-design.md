@@ -235,3 +235,14 @@ HTML sin aviso y romper el scraper → hay un costo real de mantenimiento contin
 - Login propio con hash de contraseña (bcrypt/argon2) y sesiones.
 - Concurrencia limitada + jitter entre requests para no comportarse como abuso hacia MEV.
 - Uso autorizado: cada abogado usa su propia cuenta MEV; el estudio contrató el desarrollo.
+
+## 11. Addendum (2026-07-13) — Autenticación unificada con MEV
+
+Cambio sobre el diseño original de auth:
+
+- **Abogado**: entra a la app con su **usuario y contraseña de MEV** (los mismos del portal) + "Creado en". El backend los **valida en vivo contra MEV** (Playwright) en cada login; si es correcto, guarda la clave **encriptada** (para las búsquedas) y crea la sesión. No hay contraseña propia de la app. Se identifica por su `mevUsuario` (único), que el admin pre-registra.
+- **Admin**: login separado en **`/admin/login`** con **email + contraseña** (bcrypt). El admin nunca ve la contraseña MEV (queda encriptada).
+- **Alta de abogado** (admin): usuario MEV + nombre + email (opcional). Sin contraseña. El abogado "activa" su acceso en su primer login exitoso (ahí se guarda la clave). El panel muestra estado *Activado* / *Pendiente 1er ingreso*.
+- **Modelo**: se fusionó `MevCredential` dentro de `User` (`mevUsuario`, `mevClaveEncrypted`, `mevDeptoRegistrado`, con `email`/`passwordHash` opcionales solo para admin). Migración `20260713174120_auth_mev_login`.
+- **Eliminado**: login viejo email+contraseña para abogados, página `/perfil` y `/api/mev-credentials`.
+- **Middleware**: `/` redirige según sesión (login / buscar / admin); `/admin/login` público; área admin solo rol admin.
