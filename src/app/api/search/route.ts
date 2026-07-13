@@ -30,7 +30,12 @@ type SsePayload =
   | { event: 'error'; data: { message: string } };
 
 export async function GET(req: Request) {
-  const { userId } = await requireUser();
+  let userId: string;
+  try {
+    ({ userId } = await requireUser());
+  } catch {
+    return new Response('No autenticado', { status: 401 });
+  }
   if (!(await isActive(userId))) {
     return new Response('Suscripción vencida', { status: 402 });
   }
