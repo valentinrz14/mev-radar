@@ -44,12 +44,25 @@ export async function GET(req: Request) {
   const termino = (url.searchParams.get('termino') ?? '').trim();
   const estadoParam = url.searchParams.get('estado') ?? 'Am';
   const depto = getDepartamento(departamento);
-  const cred = await prisma.mevCredential.findUnique({ where: { userId } });
-  if (!termino || !depto || !cred) return new Response('Faltan datos', { status: 400 });
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (
+    !termino ||
+    !depto ||
+    !user?.mevUsuario ||
+    !user.mevClaveEncrypted ||
+    !user.mevDeptoRegistrado
+  ) {
+    return new Response('Faltan datos', { status: 400 });
+  }
   if (estadoParam !== 'Ac' && estadoParam !== 'Ar' && estadoParam !== 'Am') {
     return new Response('Estado inválido', { status: 400 });
   }
   const estado = estadoParam;
+  const creds = {
+    usuario: user.mevUsuario,
+    clave: decryptSecret(user.mevClaveEncrypted),
+    deptoRegistrado: user.mevDeptoRegistrado,
+  };
 
   const encoder = new TextEncoder();
   const ac = new AbortController();
@@ -71,14 +84,7 @@ export async function GET(req: Request) {
       });
       try {
         await queue.run(async () => {
-          const session = await MevSession.open(
-            {
-              usuario: cred.mevUsuario,
-              clave: decryptSecret(cred.mevClaveEncrypted),
-              deptoRegistrado: cred.mevDeptoRegistrado,
-            },
-            depto.code,
-          );
+          const session = await MevSession.open(creds, depto.code);
           try {
             let started = false;
             let totalMatches = 0;

@@ -1,11 +1,15 @@
+import { Prisma } from '@prisma/client';
 import { NextResponse } from 'next/server';
-import { hashPassword } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/session';
 import { daysRemaining, subscriptionBadge } from '@/lib/subscription';
 
 export async function GET() {
-  await requireAdmin();
+  try {
+    await requireAdmin();
+  } catch {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+  }
   const users = await prisma.user.findMany({
     where: { role: 'lawyer' },
     include: { subscription: true },
@@ -19,6 +23,8 @@ export async function GET() {
         id: u.id,
         nombre: u.nombre,
         email: u.email,
+        mevUsuario: u.mevUsuario,
+        activado: u.mevClaveEncrypted != null,
         expiresAt: exp,
         daysRemaining: days,
         badge: subscriptionBadge(days),
@@ -29,21 +35,59 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  await requireAdmin();
-  const body = await req.json();
+  try {
+    await requireAdmin();
+  } catch {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+  }
+  let body: {
+    action?: string;
+    userId?: string;
+    mevUsuario?: string;
+    email?: string;
+    nombre?: string;
+  };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'Cuerpo inválido' }, { status: 400 });
+  }
+
   if (body.action === 'create') {
-    const passwordHash = await hashPassword(body.password);
+    const mevUsuario = body.mevUsuario?.trim();
+    const email = body.email?.trim();
+    const nombre = body.nombre?.trim();
+    if (!mevUsuario || !nombre) {
+      return NextResponse.json({ error: 'Usuario MEV y nombre son obligatorios' }, { status: 400 });
+    }
     const expiresAt = new Date(Date.now() + 30 * 86_400_000);
-    await prisma.user.create({
-      data: {
-        email: body.email,
-        nombre: body.nombre,
-        passwordHash,
-        role: 'lawyer',
-        subscription: { create: { expiresAt } },
-      },
-    });
-  } else if (body.action === 'renew') {
+    try {
+      await prisma.user.create({
+        data: {
+          mevUsuario,
+          email: email || null,
+          nombre,
+          role: 'lawyer',
+          subscription: { create: { expiresAt } },
+        },
+      });
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+        return NextResponse.json(
+          { error: 'Ya existe un abogado con ese usuario MEV o email.' },
+          { status: 409 },
+        );
+      }
+      throw e;
+    }
+    return NextResponse.json({ ok: true });
+  }
+
+  if (!body.userId) {
+    return NextResponse.json({ error: 'Falta userId' }, { status: 400 });
+  }
+
+  if (body.action === 'renew') {
     const sub = await prisma.subscription.findUnique({ where: { userId: body.userId } });
     const now = new Date();
     const base = sub && sub.expiresAt > now ? sub.expiresAt : now;
@@ -53,7 +97,10 @@ export async function POST(req: Request) {
       create: { userId: body.userId, status: 'active', startsAt: now, expiresAt },
       update: { status: 'active', expiresAt },
     });
-  } else if (body.action === 'toggle') {
+    return NextResponse.json({ ok: true });
+  }
+
+  if (body.action === 'toggle') {
     const sub = await prisma.subscription.findUnique({ where: { userId: body.userId } });
     const now = new Date();
     await prisma.subscription.upsert({
@@ -66,13 +113,8 @@ export async function POST(req: Request) {
       },
       update: { status: sub?.status === 'active' ? 'canceled' : 'active' },
     });
-  } else if (body.action === 'reset') {
-    await prisma.user.update({
-      where: { id: body.userId },
-      data: { passwordHash: await hashPassword(body.password) },
-    });
-  } else {
-    return NextResponse.json({ error: 'Acción desconocida' }, { status: 400 });
+    return NextResponse.json({ ok: true });
   }
-  return NextResponse.json({ ok: true });
+
+  return NextResponse.json({ error: 'Acción desconocida' }, { status: 400 });
 }

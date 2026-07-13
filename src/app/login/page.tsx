@@ -1,28 +1,40 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { DEPTOS_REGISTRADOS } from '@/lib/departamentos';
 import { RadarMark } from '../(app)/RadarMark';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [usuario, setUsuario] = useState('');
+  const [clave, setClave] = useState('');
+  const [deptoRegistrado, setDeptoRegistrado] = useState('MO');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-    if (res.ok) {
-      const { role } = await res.json();
-      router.push(role === 'admin' ? '/admin' : '/buscar');
-    } else {
-      setError('Email o contraseña incorrectos');
+    setLoading(true);
+    try {
+      const res = await fetch('/api/auth/mev-login', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ usuario, clave, deptoRegistrado }),
+      });
+      if (res.ok) {
+        router.push('/buscar');
+        return;
+      }
+      const data = (await res.json().catch(() => null)) as { error?: string } | null;
+      setError(data?.error ?? 'No se pudo ingresar. Intentá de nuevo.');
+    } catch {
+      setError('No se pudo conectar. Intentá de nuevo.');
+    } finally {
+      setLoading(false);
     }
   }
+
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--ink)] px-6">
       <svg
@@ -45,46 +57,69 @@ export default function LoginPage() {
             MEV Radar
           </h1>
           <p className="mt-2 text-sm text-[var(--ink-soft)]">
-            Ubicá causas en todos los juzgados, sin ir juzgado por juzgado.
+            Ingresá con tu usuario y contraseña de MEV.
           </p>
         </div>
 
         <form onSubmit={submit} className="mt-7 space-y-4">
           <div>
             <label
-              htmlFor="email"
+              htmlFor="usuario"
               className="mb-1 block text-[0.72rem] font-semibold uppercase tracking-wide text-[var(--ink-soft)]"
             >
-              Email
+              Usuario MEV
             </label>
             <input
-              id="email"
+              id="usuario"
+              autoComplete="username"
               className="w-full rounded-[10px] border border-[var(--line)] px-3 py-2 text-sm text-[var(--ink)]"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={usuario}
+              onChange={(e) => setUsuario(e.target.value)}
             />
           </div>
           <div>
             <label
-              htmlFor="password"
+              htmlFor="clave"
               className="mb-1 block text-[0.72rem] font-semibold uppercase tracking-wide text-[var(--ink-soft)]"
             >
-              Contraseña
+              Contraseña MEV
             </label>
             <input
-              id="password"
-              className="w-full rounded-[10px] border border-[var(--line)] px-3 py-2 text-sm text-[var(--ink)]"
+              id="clave"
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+              className="w-full rounded-[10px] border border-[var(--line)] px-3 py-2 text-sm text-[var(--ink)]"
+              value={clave}
+              onChange={(e) => setClave(e.target.value)}
             />
+          </div>
+          <div>
+            <label
+              htmlFor="deptoRegistrado"
+              className="mb-1 block text-[0.72rem] font-semibold uppercase tracking-wide text-[var(--ink-soft)]"
+            >
+              Creado en
+            </label>
+            <select
+              id="deptoRegistrado"
+              className="w-full rounded-[10px] border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--ink)]"
+              value={deptoRegistrado}
+              onChange={(e) => setDeptoRegistrado(e.target.value)}
+            >
+              {DEPTOS_REGISTRADOS.map((d) => (
+                <option key={d.value} value={d.value}>
+                  {d.label}
+                </option>
+              ))}
+            </select>
           </div>
           {error && <p className="text-sm text-[var(--danger)]">{error}</p>}
           <button
             type="submit"
-            className="w-full rounded-[10px] bg-[var(--seal)] py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
+            disabled={loading || !usuario || !clave}
+            className="w-full rounded-[10px] bg-[var(--seal)] py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
           >
-            Ingresar
+            {loading ? 'Validando con MEV…' : 'Ingresar'}
           </button>
         </form>
       </div>

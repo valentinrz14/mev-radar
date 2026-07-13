@@ -25,25 +25,23 @@ enum SearchStatus {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  passwordHash String
-  nombre       String
-  role         Role     @default(lawyer)
-  createdAt    DateTime @default(now())
-  credential   MevCredential?
+  id     String @id @default(cuid())
+  nombre String
+  role   Role   @default(lawyer)
+
+  // Admin: entra con email + passwordHash.
+  email        String? @unique
+  passwordHash String?
+
+  // Abogado: entra con su usuario/contraseña de MEV (validados en vivo).
+  // La clave se guarda encriptada en el primer login exitoso y se usa para buscar.
+  mevUsuario         String? @unique
+  mevClaveEncrypted  String?
+  mevDeptoRegistrado String?
+
+  createdAt    DateTime      @default(now())
   subscription Subscription?
   searches     Search[]
-}
-
-model MevCredential {
-  id                 String   @id @default(cuid())
-  userId             String   @unique
-  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  mevUsuario         String
-  mevClaveEncrypted  String
-  mevDeptoRegistrado String
-  updatedAt          DateTime @updatedAt
 }
 
 model Subscription {

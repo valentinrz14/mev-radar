@@ -12,6 +12,32 @@ export class MevSession {
     private readonly departamentoCode: string,
   ) {}
 
+  /**
+   * Valida en vivo un usuario/clave/deptoRegistrado contra el login de MEV.
+   * Devuelve true si el login es correcto (se llega a la selección de organismo).
+   * No navega a ningún departamento ni deja sesión abierta.
+   */
+  static async validateCredentials(creds: MevCreds): Promise<boolean> {
+    const browser = await getBrowser();
+    const ctx = await browser.newContext();
+    try {
+      const page = await ctx.newPage();
+      await page.goto(`${BASE}/loguin.asp`, { waitUntil: 'domcontentloaded' });
+      await page.fill('input[name=usuario]', creds.usuario);
+      await page.fill('input[name=clave]', creds.clave);
+      await page.selectOption('select[name=DeptoRegistrado]', creds.deptoRegistrado);
+      await Promise.all([
+        page.waitForLoadState('domcontentloaded'),
+        page.click('input[type=submit]'),
+      ]);
+      return (await page.$('select[name=DtoJudElegido]')) !== null;
+    } catch {
+      return false;
+    } finally {
+      await ctx.close().catch(() => {});
+    }
+  }
+
   static async open(creds: MevCreds, departamentoCode: string): Promise<MevSession> {
     const browser = await getBrowser();
     const ctx = await browser.newContext();

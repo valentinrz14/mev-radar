@@ -9,21 +9,29 @@ export async function middleware(req: NextRequest) {
     cookieName: 'mevradar_session',
   });
   const { pathname } = req.nextUrl;
+  const { userId, role } = session;
 
   // Home: sin sesión -> login; con sesión -> a la pantalla que corresponde.
   if (pathname === '/') {
-    if (!session.userId) return NextResponse.redirect(new URL('/login', req.url));
-    return NextResponse.redirect(new URL(session.role === 'admin' ? '/admin' : '/buscar', req.url));
+    if (!userId) return NextResponse.redirect(new URL('/login', req.url));
+    return NextResponse.redirect(new URL(role === 'admin' ? '/admin' : '/buscar', req.url));
   }
 
-  const isLogin = pathname === '/login';
-  if (!session.userId && !isLogin) return NextResponse.redirect(new URL('/login', req.url));
-  if (session.userId && session.role !== 'admin' && pathname.startsWith('/admin')) {
-    return NextResponse.redirect(new URL('/buscar', req.url));
+  // Área de admin (excepto su propio login): requiere rol admin.
+  if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
+    if (!userId) return NextResponse.redirect(new URL('/admin/login', req.url));
+    if (role !== 'admin') return NextResponse.redirect(new URL('/buscar', req.url));
+    return res;
   }
+
+  // Login de admin: público.
+  if (pathname === '/admin/login') return res;
+
+  // Rutas de abogado (/buscar, /historial): requieren sesión.
+  if (!userId) return NextResponse.redirect(new URL('/login', req.url));
   return res;
 }
 
 export const config = {
-  matcher: ['/', '/buscar/:path*', '/historial/:path*', '/perfil/:path*', '/admin/:path*'],
+  matcher: ['/', '/buscar/:path*', '/historial/:path*', '/admin/:path*'],
 };
