@@ -4,7 +4,10 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  // Runtime: en Supabase apuntá al pooler (Supavisor, puerto 6543, ?pgbouncer=true).
+  url = env("DATABASE_URL")
+  // Migraciones: conexión directa/sesión (puerto 5432). En local puede ser igual a DATABASE_URL.
+  directUrl = env("DIRECT_URL")
 }
 
 enum Role {
