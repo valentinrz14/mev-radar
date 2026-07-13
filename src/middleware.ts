@@ -8,14 +8,22 @@ export async function middleware(req: NextRequest) {
     password: process.env.SESSION_SECRET!,
     cookieName: 'mevradar_session',
   });
-  const isLogin = req.nextUrl.pathname === '/login';
+  const { pathname } = req.nextUrl;
+
+  // Home: sin sesión -> login; con sesión -> a la pantalla que corresponde.
+  if (pathname === '/') {
+    if (!session.userId) return NextResponse.redirect(new URL('/login', req.url));
+    return NextResponse.redirect(new URL(session.role === 'admin' ? '/admin' : '/buscar', req.url));
+  }
+
+  const isLogin = pathname === '/login';
   if (!session.userId && !isLogin) return NextResponse.redirect(new URL('/login', req.url));
-  if (session.userId && session.role !== 'admin' && req.nextUrl.pathname.startsWith('/admin')) {
+  if (session.userId && session.role !== 'admin' && pathname.startsWith('/admin')) {
     return NextResponse.redirect(new URL('/buscar', req.url));
   }
   return res;
 }
 
 export const config = {
-  matcher: ['/buscar/:path*', '/historial/:path*', '/perfil/:path*', '/admin/:path*'],
+  matcher: ['/', '/buscar/:path*', '/historial/:path*', '/perfil/:path*', '/admin/:path*'],
 };
