@@ -25,6 +25,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <Link href="/historial" className="transition-colors hover:text-[var(--seal)]">
               Historial
             </Link>
+            <Link href="/favoritos" className="transition-colors hover:text-[var(--seal)]">
+              Favoritos
+            </Link>
             {isAdmin && (
               <Link href="/admin" className="transition-colors hover:text-[var(--seal)]">
                 Panel

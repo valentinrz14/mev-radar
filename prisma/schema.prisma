@@ -45,6 +45,7 @@ model User {
   createdAt    DateTime      @default(now())
   subscription Subscription?
   searches     Search[]
+  favorites    Favorite[]
 }
 
 model Subscription {
@@ -86,4 +87,22 @@ model SearchResult {
   ultimoMovimiento String
   nidCausa         String
   pidJuzgado       String
+}
+
+// Causa marcada como favorita por un abogado. Guarda lo necesario para
+// renderizar la tarjeta y el link a MEV, sin depender de una búsqueda.
+model Favorite {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  caratula      String
+  organismoName String
+  estado        String
+  nroExpediente String
+  fechaInicio   String
+  nidCausa      String
+  pidJuzgado    String
+  createdAt     DateTime @default(now())
+
+  @@unique([userId, nidCausa, pidJuzgado])
 }

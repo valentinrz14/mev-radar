@@ -35,6 +35,12 @@ describe('matchesWholeWord', () => {
     // falta una de las palabras -> no matchea
     expect(matchesWholeWord('LOTTI MARIA C/ X', 'Juan Lotti')).toBe(false);
   });
+
+  it('ignora comas, espacios de más y otra puntuación en el término', () => {
+    expect(matchesWholeWord('LOTTI, JUAN JOSE C/ X', 'Lotti, Juan')).toBe(true);
+    expect(matchesWholeWord('LOTTI JUAN C/ X', '  Juan   Lotti  ')).toBe(true);
+    expect(matchesWholeWord('LOTTI JUAN C/ X', 'lotti/juan')).toBe(true);
+  });
 });
 
 describe('pickSearchToken', () => {
@@ -46,6 +52,11 @@ describe('pickSearchToken', () => {
     expect(pickSearchToken('Juan Lotti')).toBe('Lotti');
     expect(pickSearchToken('Lotti Juan')).toBe('Lotti');
     expect(pickSearchToken('Ana Rodriguez')).toBe('Rodriguez');
+  });
+  it('limpia puntuación al elegir el token que va a MEV', () => {
+    // sin la limpieza, mandaría "Lotti," con la coma y MEV no devolvería nada
+    expect(pickSearchToken('Lotti, Juan')).toBe('Lotti');
+    expect(pickSearchToken('  Juan   Lotti  ')).toBe('Lotti');
   });
 });
 
