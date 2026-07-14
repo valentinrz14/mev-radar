@@ -4,6 +4,8 @@ import { useCallback, useRef, useState } from 'react';
 export type Match = {
   caratula: string;
   organismoName: string;
+  // Todos los organismos donde apareció esta misma causa (mismo expediente).
+  organismos: string[];
   nroExpediente: string;
   estado: string;
   fechaInicio: string;
@@ -15,7 +17,14 @@ export type Progress = { current: number; total: number; label: string };
 export type DeptProgress = { current: number; total: number; name: string };
 export type SearchModo = 'caratula' | 'expediente' | 'receptoria';
 
-type RawMatch = Omit<Match, 'organismoName'>;
+type RawMatch = Omit<Match, 'organismoName' | 'organismos'>;
+
+// Misma causa = mismo nº de expediente. Si viene vacío, cae a nidCausa+pidJuzgado
+// para no agrupar causas distintas por error.
+function groupKey(m: RawMatch): string {
+  const exp = m.nroExpediente.trim();
+  return exp ? `exp:${exp.toLowerCase()}` : `id:${m.nidCausa}:${m.pidJuzgado}`;
+}
 
 type StartEventData = { total: number; departamento: string };
 type DepartmentEventData = { index: number; total: number; name: string };
@@ -62,10 +71,23 @@ export function useSearchStream(onDone: (total: number) => void) {
         setProgress({ current: d.index, total: d.total, label: d.name });
         setDiscarded((x) => x + (d.discardedCount ?? 0));
         if (d.matches?.length) {
-          setMatches((prev) => [
-            ...prev,
-            ...d.matches.map((m) => ({ ...m, organismoName: d.name })),
-          ]);
+          setMatches((prev) => {
+            // Agrupamos por expediente: si la causa ya apareció en otro organismo,
+            // sumamos el organismo a su lista en vez de crear otra tarjeta.
+            const byKey = new Map(prev.map((m) => [groupKey(m), m]));
+            for (const raw of d.matches) {
+              const k = groupKey(raw);
+              const existing = byKey.get(k);
+              if (existing) {
+                if (!existing.organismos.includes(d.name)) {
+                  byKey.set(k, { ...existing, organismos: [...existing.organismos, d.name] });
+                }
+              } else {
+                byKey.set(k, { ...raw, organismoName: d.name, organismos: [d.name] });
+              }
+            }
+            return Array.from(byKey.values());
+          });
         }
       });
       es.addEventListener('done', (e) => {

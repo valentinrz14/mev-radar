@@ -148,7 +148,12 @@ export default function BuscarPage() {
             <ul className="flex list-none flex-col gap-3">
               {matches.map((m) => (
                 <li key={`${m.organismoName}-${m.nidCausa}-${m.pidJuzgado}`}>
-                  <MatchCard match={m} favorited={isFavorited(m)} onToggle={() => toggle(m)} />
+                  <MatchCard
+                    match={m}
+                    favorited={isFavorited(m)}
+                    onToggle={() => toggle(m)}
+                    organismos={m.organismos}
+                  />
                 </li>
               ))}
             </ul>

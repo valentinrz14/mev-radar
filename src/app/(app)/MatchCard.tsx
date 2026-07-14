@@ -22,11 +22,15 @@ export function MatchCard({
   match,
   favorited,
   onToggle,
+  organismos,
 }: {
   match: FavMatch;
   favorited: boolean;
   onToggle: () => void;
+  // Si la causa aparece en varios organismos, se listan todos acá.
+  organismos?: string[];
 }) {
+  const varios = organismos && organismos.length > 1;
   return (
     <div className="relative rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-4 shadow-[0_1px_2px_rgba(21,33,59,.06),0_1px_8px_rgba(21,33,59,.04)] transition-shadow hover:border-[var(--signal)] hover:shadow-[0_2px_6px_rgba(21,33,59,.1),0_2px_12px_rgba(21,33,59,.06)]">
       <button
@@ -48,7 +52,11 @@ export function MatchCard({
         {match.caratula}
       </a>
       <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs">
-        <span className="text-[var(--ink-soft)]">{match.organismoName}</span>
+        <span className="text-[var(--ink-soft)]">
+          {varios
+            ? `En ${organismos.length} organismos: ${organismos.join(' · ')}`
+            : match.organismoName}
+        </span>
         <span aria-hidden="true" className="text-[var(--line)]">
           ·
         </span>
