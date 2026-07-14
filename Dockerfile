@@ -15,6 +15,7 @@ COPY . .
 RUN bun x prisma generate && bun run build
 
 ENV NODE_ENV=production
-# Next.js respeta la variable PORT que inyecta Railway.
 EXPOSE 3000
-CMD ["sh", "-c", "bun x prisma migrate deploy && bun run start"]
+# Corre migraciones (si falla, no bloquea el arranque del server) y levanta Next
+# bindeando explícitamente al puerto/host que espera Railway.
+CMD ["sh", "-c", "bun x prisma migrate deploy || echo 'migrate: omitido (revisar DB)'; bun x next start -H 0.0.0.0 -p ${PORT:-3000}"]
