@@ -1,7 +1,34 @@
 export type Departamento = { code: string; name: string; deptoRegistrado: string };
 
-// v1: solo Morón. En v2 se agregan el resto (mismo shape).
-export const DEPARTAMENTOS: Departamento[] = [{ code: '19', name: 'Morón', deptoRegistrado: 'MO' }];
+// Catálogo completo de departamentos judiciales de MEV (código DtoJudElegido).
+// `code` es lo único que usa la búsqueda; `deptoRegistrado` queda como referencia
+// (el login usa el mevDeptoRegistrado del usuario, no el del departamento buscado).
+// Ordenados alfabéticamente para el selector de la UI.
+export const DEPARTAMENTOS: Departamento[] = [
+  { code: '80', name: 'Avellaneda-Lanús', deptoRegistrado: '' },
+  { code: '10', name: 'Azul', deptoRegistrado: 'AZ' },
+  { code: '11', name: 'Bahía Blanca', deptoRegistrado: 'BB' },
+  { code: '12', name: 'Dolores', deptoRegistrado: 'DO' },
+  { code: '13', name: 'Junín', deptoRegistrado: 'JU' },
+  { code: '14', name: 'La Matanza', deptoRegistrado: 'LM' },
+  { code: '6', name: 'La Plata', deptoRegistrado: 'LP' },
+  { code: '16', name: 'Lomas de Zamora', deptoRegistrado: 'LZ' },
+  { code: '17', name: 'Mar del Plata', deptoRegistrado: 'MP' },
+  { code: '18', name: 'Mercedes', deptoRegistrado: 'ME' },
+  { code: '52', name: 'Moreno - Gral. Rodríguez', deptoRegistrado: 'MR' },
+  { code: '19', name: 'Morón', deptoRegistrado: 'MO' },
+  { code: '20', name: 'Necochea', deptoRegistrado: 'NE' },
+  { code: '21', name: 'Olavarría', deptoRegistrado: 'OL' },
+  { code: '22', name: 'Pergamino', deptoRegistrado: 'PE' },
+  { code: '23', name: 'Quilmes', deptoRegistrado: 'QU' },
+  { code: '24', name: 'San Isidro', deptoRegistrado: 'SI' },
+  { code: '25', name: 'San Martín', deptoRegistrado: 'SM' },
+  { code: '26', name: 'San Nicolás', deptoRegistrado: 'SN' },
+  { code: '27', name: 'Tandil', deptoRegistrado: 'TN' },
+  { code: '28', name: 'Trenque Lauquen', deptoRegistrado: 'TL' },
+  { code: '49', name: 'Tres Arroyos', deptoRegistrado: 'TY' },
+  { code: '29', name: 'Zárate/Campana', deptoRegistrado: 'ZC' },
+];
 
 export function getDepartamento(code: string): Departamento | undefined {
   return DEPARTAMENTOS.find((d) => d.code === code);

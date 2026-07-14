@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { DEPARTAMENTOS } from '@/lib/departamentos';
 import { notifyDone, requestNotifyPermission } from './notify';
 import { useSearchStream } from './useSearchStream';
 
@@ -33,7 +34,11 @@ export default function BuscarPage() {
           value={departamento}
           onChange={(e) => setDepartamento(e.target.value)}
         >
-          <option value="19">Morón</option>
+          {DEPARTAMENTOS.map((d) => (
+            <option key={d.code} value={d.code}>
+              {d.name}
+            </option>
+          ))}
         </select>
         <input
           className="flex-1 rounded-[10px] border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--ink)] placeholder:text-[var(--ink-soft)]"
