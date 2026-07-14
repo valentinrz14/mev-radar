@@ -2,7 +2,6 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { DEPTOS_REGISTRADOS } from '@/lib/departamentos';
-import { RadarMark } from '../(app)/RadarMark';
 import { ThemeToggle } from '../ThemeToggle';
 
 export default function LoginPage() {
@@ -56,7 +55,8 @@ export default function LoginPage() {
 
       <div className="relative w-full max-w-sm rounded-xl bg-[var(--surface)] p-8 shadow-[0_1px_2px_rgba(21,33,59,.06),0_1px_8px_rgba(21,33,59,.04)]">
         <div className="flex flex-col items-center text-center">
-          <RadarMark size={44} />
+          {/* biome-ignore lint/performance/noImgElement: logo estático servido desde /public */}
+          <img src="/icon.png" alt="MEV Radar" width={56} height={56} className="rounded-2xl" />
           <h1 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold text-[var(--ink)]">
             MEV Radar
           </h1>
