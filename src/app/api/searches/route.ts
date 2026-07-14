@@ -10,6 +10,7 @@ export async function GET() {
       id: true,
       termino: true,
       departamento: true,
+      modo: true,
       totalMatches: true,
       createdAt: true,
       status: true,

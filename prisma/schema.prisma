@@ -27,6 +27,12 @@ enum SearchStatus {
   error
 }
 
+enum SearchModo {
+  caratula
+  expediente
+  receptoria
+}
+
 model User {
   id     String @id @default(cuid())
   nombre String
@@ -66,6 +72,7 @@ model Search {
   departamento String
   termino      String
   estado       String
+  modo         SearchModo   @default(caratula)
   status       SearchStatus @default(running)
   totalMatches Int          @default(0)
   createdAt    DateTime     @default(now())

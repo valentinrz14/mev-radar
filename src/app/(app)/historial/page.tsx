@@ -1,14 +1,24 @@
 'use client';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 type S = {
   id: string;
   termino: string;
   departamento: string;
+  modo: string;
   totalMatches: number;
   createdAt: string;
   status: string;
 };
+// Link a /buscar que repite esta búsqueda. Departamento 'TODOS' → barrido completo.
+function hrefForSearch(s: S): string {
+  const params = new URLSearchParams({ termino: s.termino, modo: s.modo });
+  if (s.departamento === 'TODOS') params.set('todos', '1');
+  else params.set('departamento', s.departamento);
+  return `/buscar?${params.toString()}`;
+}
+
 export default function HistorialPage() {
   const [items, setItems] = useState<S[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,19 +52,21 @@ export default function HistorialPage() {
       ) : (
         <ul className="mt-6 flex list-none flex-col gap-3">
           {items.map((s) => (
-            <li
-              key={s.id}
-              className="flex items-center justify-between rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-4"
-            >
-              <span className="text-sm text-[var(--ink)]">
-                <strong className="font-[family-name:var(--font-display)] font-semibold">
-                  {s.termino}
-                </strong>{' '}
-                — {s.totalMatches} coincidencia{s.totalMatches === 1 ? '' : 's'}
-              </span>
-              <span className="font-[family-name:var(--font-mono)] text-xs text-[var(--ink-soft)]">
-                {new Date(s.createdAt).toLocaleString('es-AR')} · {s.status}
-              </span>
+            <li key={s.id}>
+              <Link
+                href={hrefForSearch(s)}
+                className="flex items-center justify-between rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-4 transition-colors hover:border-[var(--seal)] hover:bg-[var(--signal-soft)]"
+              >
+                <span className="text-sm text-[var(--ink)]">
+                  <strong className="font-[family-name:var(--font-display)] font-semibold">
+                    {s.termino}
+                  </strong>{' '}
+                  — {s.totalMatches} coincidencia{s.totalMatches === 1 ? '' : 's'}
+                </span>
+                <span className="font-[family-name:var(--font-mono)] text-xs text-[var(--ink-soft)]">
+                  {new Date(s.createdAt).toLocaleString('es-AR')} · {s.status}
+                </span>
+              </Link>
             </li>
           ))}
         </ul>

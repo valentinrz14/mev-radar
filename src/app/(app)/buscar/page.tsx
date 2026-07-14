@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { DEPARTAMENTOS } from '@/lib/departamentos';
 import { MatchCard } from '../MatchCard';
 import { useFavorites } from '../useFavorites';
@@ -21,6 +21,29 @@ export default function BuscarPage() {
     notifyDone(total),
   );
   const { isFavorited, toggle } = useFavorites();
+
+  // Si venimos del historial (?termino=...&departamento=... | &todos=1),
+  // precargamos los campos y lanzamos la misma búsqueda automáticamente.
+  const autoSearched = useRef(false);
+  useEffect(() => {
+    if (autoSearched.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const t = params.get('termino')?.trim();
+    if (!t) return;
+    autoSearched.current = true;
+    const esTodos = params.get('todos') === '1';
+    const dep = params.get('departamento') ?? '19';
+    const modoParam = params.get('modo');
+    const modoRepetir = MODOS.some((m) => m.value === modoParam)
+      ? (modoParam as SearchModo)
+      : 'caratula';
+    setTermino(t);
+    setTodos(esTodos);
+    setModo(modoRepetir);
+    if (!esTodos) setDepartamento(dep);
+    requestNotifyPermission();
+    start(dep, t, 'Am', modoRepetir, esTodos);
+  }, [start]);
 
   const searched = progress !== null;
   const percent = progress && progress.total > 0 ? (progress.current / progress.total) * 100 : 0;
