@@ -1,6 +1,8 @@
 'use client';
 import { useState } from 'react';
 import { DEPARTAMENTOS } from '@/lib/departamentos';
+import { MatchCard } from '../MatchCard';
+import { useFavorites } from '../useFavorites';
 import { notifyDone, requestNotifyPermission } from './notify';
 import { type SearchModo, useSearchStream } from './useSearchStream';
 
@@ -18,6 +20,7 @@ export default function BuscarPage() {
   const { running, progress, deptProgress, matches, discarded, start } = useSearchStream((total) =>
     notifyDone(total),
   );
+  const { isFavorited, toggle } = useFavorites();
 
   const searched = progress !== null;
   const percent = progress && progress.total > 0 ? (progress.current / progress.total) * 100 : 0;
@@ -145,59 +148,13 @@ export default function BuscarPage() {
             <ul className="flex list-none flex-col gap-3">
               {matches.map((m) => (
                 <li key={`${m.organismoName}-${m.nidCausa}-${m.pidJuzgado}`}>
-                  <MatchCard match={m} />
+                  <MatchCard match={m} favorited={isFavorited(m)} onToggle={() => toggle(m)} />
                 </li>
               ))}
             </ul>
           )}
         </div>
       )}
-    </div>
-  );
-}
-
-function MatchCard({
-  match,
-}: {
-  match: {
-    caratula: string;
-    organismoName: string;
-    nroExpediente: string;
-    estado: string;
-    fechaInicio: string;
-    nidCausa: string;
-    pidJuzgado: string;
-  };
-}) {
-  return (
-    <div className="rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-4 shadow-[0_1px_2px_rgba(21,33,59,.06),0_1px_8px_rgba(21,33,59,.04)] transition-shadow hover:border-[var(--signal)] hover:shadow-[0_2px_6px_rgba(21,33,59,.1),0_2px_12px_rgba(21,33,59,.06)]">
-      <a
-        className="font-[family-name:var(--font-display)] text-base font-semibold text-[var(--seal)] hover:underline"
-        target="_blank"
-        rel="noreferrer"
-        href={`https://mev.scba.gov.ar/procesales.asp?nidCausa=${match.nidCausa}&pidJuzgado=${match.pidJuzgado}`}
-      >
-        {match.caratula}
-      </a>
-      <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs">
-        <span className="text-[var(--ink-soft)]">{match.organismoName}</span>
-        <span aria-hidden="true" className="text-[var(--line)]">
-          ·
-        </span>
-        <span className="rounded-full bg-[var(--seal-ink)] px-2 py-0.5 font-[family-name:var(--font-mono)] text-[var(--seal)]">
-          Expte {match.nroExpediente}
-        </span>
-        <span aria-hidden="true" className="text-[var(--line)]">
-          ·
-        </span>
-        <span className="rounded-full bg-[var(--signal-soft)] px-2 py-0.5 text-[var(--ink)]">
-          {match.estado}
-        </span>
-        <span aria-hidden="true" className="text-[var(--line)]">
-          ·
-        </span>
-        <span className="text-[var(--ink-soft)]">inicio {match.fechaInicio}</span>
-      </div>
     </div>
   );
 }
