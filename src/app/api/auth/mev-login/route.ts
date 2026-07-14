@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { encryptSecret } from '@/lib/crypto';
-import { isDeptoRegistrado } from '@/lib/departamentos';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
 import { daysRemaining } from '@/lib/subscription';
@@ -10,8 +9,12 @@ import { MevSession } from '@/mev/session';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+// "TODOS los Deptos": funciona para cualquier usuario y da acceso a los 23
+// departamentos, así el abogado no necesita saber dónde fue registrado.
+const DEPTO_REGISTRADO = 'aa';
+
 export async function POST(req: Request) {
-  let body: { usuario?: string; clave?: string; deptoRegistrado?: string };
+  let body: { usuario?: string; clave?: string };
   try {
     body = await req.json();
   } catch {
@@ -19,12 +22,9 @@ export async function POST(req: Request) {
   }
   const usuario = body.usuario?.trim();
   const clave = body.clave;
-  const deptoRegistrado = body.deptoRegistrado;
-  if (!usuario || !clave || !deptoRegistrado || !isDeptoRegistrado(deptoRegistrado)) {
-    return NextResponse.json(
-      { error: 'Completá usuario, contraseña y "Creado en".' },
-      { status: 400 },
-    );
+  const deptoRegistrado = DEPTO_REGISTRADO;
+  if (!usuario || !clave) {
+    return NextResponse.json({ error: 'Completá usuario y contraseña.' }, { status: 400 });
   }
 
   // El abogado debe estar habilitado por el estudio (pre-registrado por su usuario MEV).

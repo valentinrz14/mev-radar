@@ -2,17 +2,26 @@
 import { useState } from 'react';
 import { DEPARTAMENTOS } from '@/lib/departamentos';
 import { notifyDone, requestNotifyPermission } from './notify';
-import { useSearchStream } from './useSearchStream';
+import { type SearchModo, useSearchStream } from './useSearchStream';
+
+const MODOS: { value: SearchModo; label: string; placeholder: string }[] = [
+  { value: 'caratula', label: 'Carátula', placeholder: 'Búsqueda (nombre, apellido o carátula)' },
+  { value: 'expediente', label: 'Nº expediente', placeholder: 'Número de expediente' },
+  { value: 'receptoria', label: 'Nº receptoría', placeholder: 'Número de receptoría' },
+];
 
 export default function BuscarPage() {
   const [termino, setTermino] = useState('');
   const [departamento, setDepartamento] = useState('19');
-  const { running, progress, matches, discarded, start } = useSearchStream((total) =>
+  const [modo, setModo] = useState<SearchModo>('caratula');
+  const [todos, setTodos] = useState(false);
+  const { running, progress, deptProgress, matches, discarded, start } = useSearchStream((total) =>
     notifyDone(total),
   );
 
   const searched = progress !== null;
   const percent = progress && progress.total > 0 ? (progress.current / progress.total) * 100 : 0;
+  const placeholder = MODOS.find((m) => m.value === modo)?.placeholder ?? '';
 
   return (
     <div>
@@ -21,18 +30,38 @@ export default function BuscarPage() {
       </p>
       <h1 className="mt-1 text-[2rem] font-semibold text-[var(--ink)]">Buscar causa</h1>
 
+      {/* Modo de búsqueda: carátula / nº expediente / nº receptoría */}
+      <div className="mt-5 inline-flex rounded-[10px] border border-[var(--line)] bg-[var(--surface)] p-1">
+        {MODOS.map((m) => (
+          <button
+            key={m.value}
+            type="button"
+            onClick={() => setModo(m.value)}
+            disabled={running}
+            className={`rounded-[7px] px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50 ${
+              modo === m.value
+                ? 'bg-[var(--seal)] text-white'
+                : 'text-[var(--ink-soft)] hover:text-[var(--ink)]'
+            }`}
+          >
+            {m.label}
+          </button>
+        ))}
+      </div>
+
       <form
-        className="mt-6 flex flex-col gap-3 sm:flex-row"
+        className="mt-4 flex flex-col gap-3 sm:flex-row"
         onSubmit={(e) => {
           e.preventDefault();
           requestNotifyPermission();
-          start(departamento, termino, 'Am');
+          start(departamento, termino, 'Am', modo, todos);
         }}
       >
         <select
-          className="rounded-[10px] border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--ink)]"
+          className="rounded-[10px] border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--ink)] disabled:opacity-50"
           value={departamento}
           onChange={(e) => setDepartamento(e.target.value)}
+          disabled={todos || running}
         >
           {DEPARTAMENTOS.map((d) => (
             <option key={d.code} value={d.code}>
@@ -42,7 +71,7 @@ export default function BuscarPage() {
         </select>
         <input
           className="flex-1 rounded-[10px] border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--ink)] placeholder:text-[var(--ink-soft)]"
-          placeholder="Apellido (carátula)"
+          placeholder={placeholder}
           value={termino}
           onChange={(e) => setTermino(e.target.value)}
         />
@@ -55,6 +84,22 @@ export default function BuscarPage() {
         </button>
       </form>
 
+      <label className="mt-3 flex items-center gap-2 text-sm text-[var(--ink-soft)]">
+        <input
+          type="checkbox"
+          checked={todos}
+          onChange={(e) => setTodos(e.target.checked)}
+          disabled={running}
+          className="accent-[var(--seal)]"
+        />
+        Buscar en todos los departamentos
+      </label>
+      {todos && (
+        <p className="mt-1.5 text-xs text-[var(--ink-soft)]">
+          ⚠️ Se recorren los 23 departamentos. Puede tardar 20-40 minutos.
+        </p>
+      )}
+
       {running && (
         <div className="mt-10 flex flex-col items-center">
           <RadarLoader
@@ -63,6 +108,11 @@ export default function BuscarPage() {
             total={progress?.total ?? 0}
           />
           <div className="mt-5 w-full max-w-xs text-center">
+            {deptProgress && (
+              <p className="mb-1 text-sm font-medium text-[var(--ink)]">
+                Departamento {deptProgress.current} de {deptProgress.total} — {deptProgress.name}
+              </p>
+            )}
             <p className="text-sm text-[var(--ink-soft)]">
               {progress
                 ? `Organismo ${progress.current} de ${progress.total} — ${progress.label}`
