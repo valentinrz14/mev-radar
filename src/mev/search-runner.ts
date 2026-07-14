@@ -1,5 +1,5 @@
 import type { Page } from 'playwright';
-import { filterResults } from '@/lib/result-filter';
+import { filterResults, pickSearchToken } from '@/lib/result-filter';
 import { parseResults, type RawResult } from '@/lib/results-parser';
 import { readOrganisms } from './catalog';
 import type { MevSession } from './session';
@@ -131,7 +131,11 @@ export async function runSearch(
     let result: OrganismResult;
     try {
       await session.ensureOnBusqueda();
-      const collected = await collectOrganismRows(session.page, org.code, termino, estado, modo);
+      // Por carátula mandamos a MEV solo la palabra distintiva (evita el problema
+      // de orden/substring); el filtro local exige después el término completo.
+      // Por número (expediente/receptoría) se busca el valor tal cual.
+      const mevQuery = modo === 'caratula' ? pickSearchToken(termino) : termino;
+      const collected = await collectOrganismRows(session.page, org.code, mevQuery, estado, modo);
       if (collected.excedeLimite) {
         result = {
           code: org.code,
