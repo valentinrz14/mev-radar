@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { filterResults, matchesWholeWord, normalize } from '@/lib/result-filter';
+import { filterResults, matchesWholeWord, normalize, pickSearchToken } from '@/lib/result-filter';
 
 describe('normalize', () => {
   it('baja mayúsculas y saca acentos', () => {
@@ -24,6 +24,28 @@ describe('matchesWholeWord', () => {
     ]) {
       expect(matchesWholeWord(c, 'Lotti')).toBe(false);
     }
+  });
+
+  it('con varias palabras exige todas (en cualquier orden)', () => {
+    // "Juan Lotti" (nombre apellido) matchea aunque MEV use "APELLIDO NOMBRE"
+    expect(matchesWholeWord('BBVA S.A. C/ LOTTI JUAN JOSE S/ EJECUTIVO', 'Juan Lotti')).toBe(true);
+    expect(matchesWholeWord('LOTTI JUAN C/ PEREZ', 'lotti juan')).toBe(true);
+    // pero "lotti" tiene que ser palabra completa: BELLOTTI no cuenta
+    expect(matchesWholeWord('BELLOTTI JUAN MANUEL C/ X', 'Juan Lotti')).toBe(false);
+    // falta una de las palabras -> no matchea
+    expect(matchesWholeWord('LOTTI MARIA C/ X', 'Juan Lotti')).toBe(false);
+  });
+});
+
+describe('pickSearchToken', () => {
+  it('con una palabra devuelve esa palabra', () => {
+    expect(pickSearchToken('Lotti')).toBe('Lotti');
+    expect(pickSearchToken('  Lotti  ')).toBe('Lotti');
+  });
+  it('con varias palabras devuelve la más larga (el apellido distintivo)', () => {
+    expect(pickSearchToken('Juan Lotti')).toBe('Lotti');
+    expect(pickSearchToken('Lotti Juan')).toBe('Lotti');
+    expect(pickSearchToken('Ana Rodriguez')).toBe('Rodriguez');
   });
 });
 

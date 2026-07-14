@@ -12,10 +12,13 @@ export type Match = {
   pidJuzgado: string;
 };
 export type Progress = { current: number; total: number; label: string };
+export type DeptProgress = { current: number; total: number; name: string };
+export type SearchModo = 'caratula' | 'expediente' | 'receptoria';
 
 type RawMatch = Omit<Match, 'organismoName'>;
 
 type StartEventData = { total: number; departamento: string };
+type DepartmentEventData = { index: number; total: number; name: string };
 type OrganismEventData = {
   index: number;
   total: number;
@@ -29,23 +32,30 @@ type DoneEventData = { totalMatches: number };
 export function useSearchStream(onDone: (total: number) => void) {
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState<Progress | null>(null);
+  const [deptProgress, setDeptProgress] = useState<DeptProgress | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
   const [discarded, setDiscarded] = useState(0);
   const esRef = useRef<EventSource | null>(null);
 
   const start = useCallback(
-    (departamento: string, termino: string, estado: string) => {
+    (departamento: string, termino: string, estado: string, modo: SearchModo, todos: boolean) => {
       setRunning(true);
       setMatches([]);
       setDiscarded(0);
       setProgress(null);
-      const es = new EventSource(
-        `/api/search?departamento=${departamento}&termino=${encodeURIComponent(termino)}&estado=${estado}`,
-      );
+      setDeptProgress(null);
+      const params = new URLSearchParams({ termino, estado, modo });
+      if (todos) params.set('todos', '1');
+      else params.set('departamento', departamento);
+      const es = new EventSource(`/api/search?${params.toString()}`);
       esRef.current = es;
       es.addEventListener('start', (e) => {
         const d = JSON.parse((e as MessageEvent).data) as StartEventData;
         setProgress({ current: 0, total: d.total, label: d.departamento });
+      });
+      es.addEventListener('department', (e) => {
+        const d = JSON.parse((e as MessageEvent).data) as DepartmentEventData;
+        setDeptProgress({ current: d.index, total: d.total, name: d.name });
       });
       es.addEventListener('organism', (e) => {
         const d = JSON.parse((e as MessageEvent).data) as OrganismEventData;
@@ -72,5 +82,5 @@ export function useSearchStream(onDone: (total: number) => void) {
     [onDone],
   );
 
-  return { running, progress, matches, discarded, start };
+  return { running, progress, deptProgress, matches, discarded, start };
 }

@@ -20,7 +20,7 @@ d('runSearch (live)', () => {
       '19',
     );
     const events: number[] = [];
-    const results = await runSearch(s, 'LOTTI', 'Am', (i) => events.push(i));
+    const results = await runSearch(s, 'LOTTI', 'Am', 'caratula', (i) => events.push(i));
     await s.close();
     expect(results.length).toBeGreaterThan(10); // 23 organismos
     expect(events.length).toBe(results.length); // callback una vez por organismo

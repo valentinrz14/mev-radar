@@ -1,14 +1,11 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { DEPTOS_REGISTRADOS } from '@/lib/departamentos';
-import { RadarMark } from '../(app)/RadarMark';
 import { ThemeToggle } from '../ThemeToggle';
 
 export default function LoginPage() {
   const [usuario, setUsuario] = useState('');
   const [clave, setClave] = useState('');
-  const [deptoRegistrado, setDeptoRegistrado] = useState('MO');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -21,7 +18,7 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/mev-login', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ usuario, clave, deptoRegistrado }),
+        body: JSON.stringify({ usuario, clave }),
       });
       if (res.ok) {
         router.push('/buscar');
@@ -56,7 +53,8 @@ export default function LoginPage() {
 
       <div className="relative w-full max-w-sm rounded-xl bg-[var(--surface)] p-8 shadow-[0_1px_2px_rgba(21,33,59,.06),0_1px_8px_rgba(21,33,59,.04)]">
         <div className="flex flex-col items-center text-center">
-          <RadarMark size={44} />
+          {/* biome-ignore lint/performance/noImgElement: logo estático servido desde /public */}
+          <img src="/icon.png" alt="MEV Radar" width={56} height={56} className="rounded-2xl" />
           <h1 className="mt-3 font-[family-name:var(--font-display)] text-2xl font-semibold text-[var(--ink)]">
             MEV Radar
           </h1>
@@ -96,26 +94,6 @@ export default function LoginPage() {
               value={clave}
               onChange={(e) => setClave(e.target.value)}
             />
-          </div>
-          <div>
-            <label
-              htmlFor="deptoRegistrado"
-              className="mb-1 block text-[0.72rem] font-semibold uppercase tracking-wide text-[var(--ink-soft)]"
-            >
-              Creado en
-            </label>
-            <select
-              id="deptoRegistrado"
-              className="w-full rounded-[10px] border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--ink)]"
-              value={deptoRegistrado}
-              onChange={(e) => setDeptoRegistrado(e.target.value)}
-            >
-              {DEPTOS_REGISTRADOS.map((d) => (
-                <option key={d.value} value={d.value}>
-                  {d.label}
-                </option>
-              ))}
-            </select>
           </div>
           {error && <p className="text-sm text-[var(--danger)]">{error}</p>}
           <button

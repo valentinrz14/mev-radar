@@ -1,10 +1,18 @@
 import type { Page } from 'playwright';
-import { filterResults } from '@/lib/result-filter';
+import { filterResults, pickSearchToken } from '@/lib/result-filter';
 import { parseResults, type RawResult } from '@/lib/results-parser';
 import { readOrganisms } from './catalog';
 import type { MevSession } from './session';
 
 const BASE = process.env.MEV_BASE_URL ?? 'https://mev.scba.gov.ar';
+
+// Modos de búsqueda de MEV: cada uno usa un radio y un campo de texto distintos.
+export type SearchModo = 'caratula' | 'expediente' | 'receptoria';
+export const MODO_FIELD: Record<SearchModo, { radio: string; field: string }> = {
+  caratula: { radio: 'xCa', field: 'caratula' },
+  expediente: { radio: 'xNc', field: 'NCausa' },
+  receptoria: { radio: 'xNr', field: 'NInterno' },
+};
 
 export type OrganismResult = {
   code: string;
@@ -19,6 +27,7 @@ export async function searchOrganism(
   code: string,
   termino: string,
   estado: string,
+  modo: SearchModo,
 ): Promise<{ html: string }> {
   if (!page.url().toLowerCase().includes('busqueda.asp')) {
     await page.goto(`${BASE}/busqueda.asp`, { waitUntil: 'domcontentloaded' });
@@ -34,9 +43,10 @@ export async function searchOrganism(
   if (realValue === undefined) {
     throw new Error(`Organismo no encontrado en el select: ${code}`);
   }
+  const { radio, field } = MODO_FIELD[modo];
   await page.selectOption('select[name=JuzgadoElegido]', realValue);
-  await page.check('input[name=radio][value=xCa]');
-  await page.fill('input[name=caratula]', termino);
+  await page.check(`input[name=radio][value=${radio}]`);
+  await page.fill(`input[name=${field}]`, termino);
   await page.check(`input[name=TipoCausa][value=${estado}]`);
   await Promise.all([page.waitForLoadState('domcontentloaded'), page.click('input[name=Buscar]')]);
   // algunas búsquedas re-renderizan la misma URL: esperar por contenido conocido
@@ -63,8 +73,9 @@ export async function collectOrganismRows(
   code: string,
   termino: string,
   estado: string,
+  modo: SearchModo,
 ): Promise<{ rows: RawResult[]; total: number | null; excedeLimite: boolean }> {
-  const { html: firstHtml } = await searchOrganism(page, code, termino, estado);
+  const { html: firstHtml } = await searchOrganism(page, code, termino, estado, modo);
   const first = parseResults(firstHtml);
   if (first.excedeLimite) {
     return { rows: [], total: first.total, excedeLimite: true };
@@ -107,6 +118,7 @@ export async function runSearch(
   session: MevSession,
   termino: string,
   estado: 'Ac' | 'Ar' | 'Am',
+  modo: SearchModo,
   onOrganism: (index: number, total: number, r: OrganismResult) => void,
   signal?: AbortSignal,
 ): Promise<OrganismResult[]> {
@@ -119,7 +131,11 @@ export async function runSearch(
     let result: OrganismResult;
     try {
       await session.ensureOnBusqueda();
-      const collected = await collectOrganismRows(session.page, org.code, termino, estado);
+      // Por carátula mandamos a MEV solo la palabra distintiva (evita el problema
+      // de orden/substring); el filtro local exige después el término completo.
+      // Por número (expediente/receptoría) se busca el valor tal cual.
+      const mevQuery = modo === 'caratula' ? pickSearchToken(termino) : termino;
+      const collected = await collectOrganismRows(session.page, org.code, mevQuery, estado, modo);
       if (collected.excedeLimite) {
         result = {
           code: org.code,
@@ -129,7 +145,12 @@ export async function runSearch(
           error: 'Demasiados resultados (>1000): agregá más texto a la búsqueda.',
         };
       } else {
-        const { matches, discarded } = filterResults(collected.rows, termino);
+        // El filtro de palabra completa solo aplica a carátula (texto). En las
+        // búsquedas numéricas (expediente/receptoría) todo resultado es match.
+        const { matches, discarded } =
+          modo === 'caratula'
+            ? filterResults(collected.rows, termino)
+            : { matches: collected.rows, discarded: [] as RawResult[] };
         result = { code: org.code, name: org.name, matches, discardedCount: discarded.length };
       }
     } catch (e) {
