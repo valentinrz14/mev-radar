@@ -99,6 +99,7 @@ export async function GET(req: Request) {
           departamento: todos ? 'TODOS' : departamento,
           termino,
           estado,
+          modo,
           status: 'running',
         },
       });
