@@ -84,18 +84,18 @@ export default function BuscarPage() {
         </button>
       </form>
 
-      <label className="mt-3 flex items-center gap-2 text-sm text-[var(--ink-soft)]">
+      <label className="mt-3 flex items-center gap-2 text-base text-[var(--ink-soft)]">
         <input
           type="checkbox"
           checked={todos}
           onChange={(e) => setTodos(e.target.checked)}
           disabled={running}
-          className="accent-[var(--seal)]"
+          className="h-4 w-4 accent-[var(--seal)]"
         />
         Buscar en todos los departamentos
       </label>
       {todos && (
-        <p className="mt-1.5 text-xs text-[var(--ink-soft)]">
+        <p className="mt-1.5 text-sm text-[var(--ink-soft)]">
           ⚠️ Se recorren los 23 departamentos. Puede tardar 20-40 minutos.
         </p>
       )}
